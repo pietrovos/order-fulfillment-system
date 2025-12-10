@@ -1,0 +1,21 @@
+# Local development. `docker compose up -d` starts the database; run the backend and frontend
+# natively (see README), or use the `app` profile to run everything in containers.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: fulfillops
+      POSTGRES_USER: fulfillops
+      POSTGRES_PASSWORD: fulfillops
+    ports:
+      - "${POSTGRES_PORT:-5452}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fulfillops -d fulfillops"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  pgdata:

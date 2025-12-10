@@ -5,7 +5,7 @@ in the README.
 
 ## Development checklist
 
-- [ ] 1. Scaffold: backend, frontend, docker-compose, Flyway baseline, CI (backend tests with Testcontainers + frontend tests)
+- [x] 1. Scaffold: backend, frontend, docker-compose, Flyway baseline, CI (backend tests with Testcontainers + frontend tests)
 - [ ] 2. Auth and roles: SALES, WAREHOUSE, SUPERVISOR; JWT; method-level authorization; seeded users
 - [ ] 3. Catalog and inventory: products, one warehouse, on-hand / reserved / available, append-only `inventory_movements` ledger
 - [ ] 4. Orders: editor with FormArray line items, explicit state machine, idempotent submission
@@ -113,3 +113,6 @@ Roles: `SALES`, `WAREHOUSE`, `SUPERVISOR`. `@PreAuthorize` sits on module servic
 
 - Spring Boot 3.5.x and Spring Modulith 1.4.x are compatible release lines.
 - JDK 21 is pinned via `mise.toml`.
+- Local ports: Postgres 5452 (compose, overridable via POSTGRES_PORT), backend 8080, frontend 4200 (proxies /api).
+- Tests share one Testcontainers Postgres per JVM (`TestcontainersConfiguration`); test logs are WARN (logback-test.xml).
+- Frontend unit tests: Angular's Vitest runner (`npm test -- --watch=false`), jsdom, so no browser is needed.

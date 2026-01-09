@@ -6,7 +6,7 @@ in the README.
 ## Development checklist
 
 - [x] 1. Scaffold: backend, frontend, docker-compose, Flyway baseline, CI (backend tests with Testcontainers + frontend tests)
-- [ ] 2. Auth and roles: SALES, WAREHOUSE, SUPERVISOR; JWT; method-level authorization; seeded users
+- [x] 2. Auth and roles: SALES, WAREHOUSE, SUPERVISOR; JWT; method-level authorization; seeded users
 - [ ] 3. Catalog and inventory: products, one warehouse, on-hand / reserved / available, append-only `inventory_movements` ledger
 - [ ] 4. Orders: editor with FormArray line items, explicit state machine, idempotent submission
 - [ ] 5. Reservation correctness: atomic conditional UPDATE, release on cancel, concurrency test (10 in stock, 2x7) repeated in a loop
@@ -116,3 +116,7 @@ Roles: `SALES`, `WAREHOUSE`, `SUPERVISOR`. `@PreAuthorize` sits on module servic
 - Local ports: Postgres 5452 (compose, overridable via POSTGRES_PORT), backend 8080, frontend 4200 (proxies /api).
 - Tests share one Testcontainers Postgres per JVM (`TestcontainersConfiguration`); test logs are WARN (logback-test.xml).
 - Frontend unit tests: Angular's Vitest runner (`npm test -- --watch=false`), jsdom, so no browser is needed.
+- Auth: demo users (`sales`, `warehouse`, `supervisor`, password `fulfill123`) are seeded by `DemoUserSeeder`
+  (disable with SEED_DEMO_USERS=false). JWT carries a `roles` claim and maps to `ROLE_*` authorities.
+  Frontend keeps the session in a signal (persisted to localStorage) and logs out on any 401.
+- Backend integration tests extend `IntegrationTest` (MockMvc + real login; `bearer("sales")`).

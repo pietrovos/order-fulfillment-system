@@ -22,3 +22,12 @@ management:
     web:
       exposure:
         include: health,info
+
+fulfillops:
+  jwt:
+    # Dev-only default. Production must set JWT_SECRET (base64, >= 32 bytes).
+    secret: ${JWT_SECRET:ZGV2LW9ubHktc2VjcmV0LWNoYW5nZS1tZS1pbi1wcm9kdWN0aW9uLTAxMjM0NTY3ODk=}
+    ttl: ${JWT_TTL:PT8H}
+    issuer: fulfillops
+  seed:
+    demo-users: ${SEED_DEMO_USERS:true}

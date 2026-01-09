@@ -12,3 +12,4 @@ playwright-report/
 *.iml
 # env
 .env
+e2e/.shot.mjs

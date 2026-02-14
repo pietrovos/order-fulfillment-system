@@ -25,7 +25,7 @@ import { NAV_ITEMS } from './nav';
         <mat-nav-list>
           @for (item of nav(); track item.path) {
             <a mat-list-item [routerLink]="item.path" routerLinkActive="active"
-               [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+               [routerLinkActiveOptions]="{ exact: !!item.exact }"
                (click)="handset() && drawer.close()">
               <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
               <span matListItemTitle>{{ item.label }}</span>

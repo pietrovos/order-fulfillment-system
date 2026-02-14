@@ -1,0 +1,20 @@
+.header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.header h1 { margin: 0; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 12px; text-align: left;
+       background: var(--mat-sys-surface-container); border: 1px solid transparent; font: inherit; color: inherit; }
+.kpi-button { cursor: pointer; }
+.kpi-button.on { border-color: var(--mat-sys-primary); background: var(--mat-sys-secondary-container); }
+.label { font: var(--mat-sys-label-medium); color: var(--mat-sys-on-surface-variant); }
+.value { font: var(--mat-sys-headline-small); font-variant-numeric: tabular-nums; }
+.warn { color: var(--mat-sys-error); }
+.search { width: 100%; max-width: 420px; margin-bottom: 12px; }
+.table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--mat-sys-outline-variant); }
+table { width: 100%; min-width: 640px; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.strong { font-weight: 600; }
+.muted { color: var(--mat-sys-on-surface-variant); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.actions { width: 48px; text-align: right; }
+.chip-low { margin-left: 8px; padding: 2px 8px; border-radius: 999px; font: var(--mat-sys-label-small);
+            background: var(--mat-sys-error-container); color: var(--mat-sys-on-error-container); }

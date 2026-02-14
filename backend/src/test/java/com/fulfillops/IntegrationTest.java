@@ -46,6 +46,30 @@ public abstract class IntegrationTest {
         }
     }
 
+    private static final java.util.concurrent.atomic.AtomicInteger SEQ = new java.util.concurrent.atomic.AtomicInteger();
+
+    /** Creates a product with a unique SKU (tests never share rows, so no cleanup is needed). */
+    protected long createProduct(String name, String price) throws Exception {
+        String sku = "T" + System.nanoTime() % 1_000_000_000L + "-" + SEQ.incrementAndGet();
+        String body = mvc.perform(post("/api/products").header("Authorization", bearer("supervisor"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(Map.of("sku", sku, "name", name, "unitPrice", price))))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return read(body).get("id").asLong();
+    }
+
+    protected long createProductWithStock(int onHand) throws Exception {
+        long id = createProduct("Stocked item", "9.99");
+        if (onHand > 0) {
+            mvc.perform(post("/api/inventory/stock/{id}/receipts", id).header("Authorization", bearer("warehouse"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"quantity\":" + onHand + "}"))
+                    .andExpect(status().isOk());
+        }
+        return id;
+    }
+
     protected JsonNode read(String body) {
         try {
             return json.readTree(body);

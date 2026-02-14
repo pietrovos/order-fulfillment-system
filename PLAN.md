@@ -7,7 +7,7 @@ in the README.
 
 - [x] 1. Scaffold: backend, frontend, docker-compose, Flyway baseline, CI (backend tests with Testcontainers + frontend tests)
 - [x] 2. Auth and roles: SALES, WAREHOUSE, SUPERVISOR; JWT; method-level authorization; seeded users
-- [ ] 3. Catalog and inventory: products, one warehouse, on-hand / reserved / available, append-only `inventory_movements` ledger
+- [x] 3. Catalog and inventory: products, one warehouse, on-hand / reserved / available, append-only `inventory_movements` ledger
 - [ ] 4. Orders: editor with FormArray line items, explicit state machine, idempotent submission
 - [ ] 5. Reservation correctness: atomic conditional UPDATE, release on cancel, concurrency test (10 in stock, 2x7) repeated in a loop
 - [ ] 6. Fulfillment: picking + packing screens, supervisor stock-exception queue, shipment timeline
@@ -120,3 +120,9 @@ Roles: `SALES`, `WAREHOUSE`, `SUPERVISOR`. `@PreAuthorize` sits on module servic
   (disable with SEED_DEMO_USERS=false). JWT carries a `roles` claim and maps to `ROLE_*` authorities.
   Frontend keeps the session in a signal (persisted to localStorage) and logs out on any 401.
 - Backend integration tests extend `IntegrationTest` (MockMvc + real login; `bearer("sales")`).
+- Inventory writes: `inventory.internal.StockLedger` is the only writer of stock_levels (JdbcTemplate, guarded
+  UPDATE ... RETURNING + ledger insert). Order-driven ops (reserve/release/ship) are Propagation.MANDATORY.
+  Ledger is append-only via trigger (UPDATE/DELETE/TRUNCATE rejected); tests never clean tables, they create
+  uniquely-SKU'd products instead.
+- Frontend is zoneless (Angular 21 default). In browser automation, wait for a control's `ng-pristine`/`ng-dirty`
+  class before typing into a freshly opened dialog, or the first CD pass overwrites the typed value.

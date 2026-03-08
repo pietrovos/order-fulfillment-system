@@ -8,7 +8,7 @@ in the README.
 - [x] 1. Scaffold: backend, frontend, docker-compose, Flyway baseline, CI (backend tests with Testcontainers + frontend tests)
 - [x] 2. Auth and roles: SALES, WAREHOUSE, SUPERVISOR; JWT; method-level authorization; seeded users
 - [x] 3. Catalog and inventory: products, one warehouse, on-hand / reserved / available, append-only `inventory_movements` ledger
-- [ ] 4. Orders: editor with FormArray line items, explicit state machine, idempotent submission
+- [x] 4. Orders: editor with FormArray line items, explicit state machine, idempotent submission
 - [ ] 5. Reservation correctness: atomic conditional UPDATE, release on cancel, concurrency test (10 in stock, 2x7) repeated in a loop
 - [ ] 6. Fulfillment: picking + packing screens, supervisor stock-exception queue, shipment timeline
 - [ ] 7. Carrier integration: simulated carrier container (fail / timeout / succeed-then-drop), outbox with retries, carrier idempotency key, lost-response integration test
@@ -126,3 +126,13 @@ Roles: `SALES`, `WAREHOUSE`, `SUPERVISOR`. `@PreAuthorize` sits on module servic
   uniquely-SKU'd products instead.
 - Frontend is zoneless (Angular 21 default). In browser automation, wait for a control's `ng-pristine`/`ng-dirty`
   class before typing into a freshly opened dialog, or the first CD pass overwrites the typed value.
+- Orders: `OrderService` (module API) never touches entity mutators directly; `orders.internal.OrderFacts` is the
+  bridge so the state machine can't be bypassed. All transitions lock the order row (`findByIdForUpdate`).
+  Reads after writes go through `getInternal`, which opens an explicit read transaction.
+  Calling `saveAndFlush` on a managed Order can blank new history rows during merge; `orders.flush()` avoids this.
+- Submission = tx1 (order SUBMITTED + RESERVE_ORDER outbox job) then inline `ReservationService.reserve` (tx2,
+  plus tx3 for STOCK_EXCEPTION). Idempotency: unique `orders.idempotency_key` + request fingerprint; replays
+  return 200 + `Idempotent-Replayed: true`; key reuse with a different body is 422.
+- Job runner: lease-based claim (`FOR UPDATE SKIP LOCKED` + `locked_until`), backoff with jitter, FAILED after
+  max_attempts, settle fenced on `locked_by`. Tests set `fulfillops.jobs.poll-enabled=false` and call `JobRunner.drain()`.
+- order_lines unique constraints are DEFERRABLE INITIALLY DEFERRED (Hibernate inserts before orphan deletes).

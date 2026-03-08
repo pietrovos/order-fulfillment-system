@@ -11,6 +11,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', icon: 'dashboard', path: '/', roles: [], exact: true },
+  { label: 'Orders', icon: 'receipt_long', path: '/orders', roles: [] },
   { label: 'Inventory', icon: 'inventory_2', path: '/inventory', roles: [], exact: true },
   { label: 'Movement ledger', icon: 'history', path: '/inventory/movements', roles: [] },
   { label: 'Products', icon: 'category', path: '/products', roles: [] },

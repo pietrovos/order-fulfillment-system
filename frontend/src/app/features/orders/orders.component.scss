@@ -1,0 +1,13 @@
+.header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.header h1 { margin: 0; }
+.toolbar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+.search { width: 100%; max-width: 420px; }
+.count { margin-left: 6px; font: var(--mat-sys-label-small); opacity: 0.75; }
+.table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--mat-sys-outline-variant); transition: opacity 120ms; }
+.table-wrap.stale { opacity: 0.6; }
+table { width: 100%; min-width: 720px; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.nowrap { white-space: nowrap; }
+.order-link { font-weight: 600; color: var(--mat-sys-primary); text-decoration: none; font-variant-numeric: tabular-nums; }
+.clickable { cursor: pointer; }
+.clickable:hover { background: var(--mat-sys-surface-container-low); }

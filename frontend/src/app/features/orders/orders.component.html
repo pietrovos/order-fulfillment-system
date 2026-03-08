@@ -1,0 +1,60 @@
+<div class="header">
+  <h1>Orders</h1>
+  @if (canCreate()) {
+    <a mat-flat-button routerLink="/orders/new" data-testid="new-order"><mat-icon>add</mat-icon> New order</a>
+  }
+</div>
+
+<div class="toolbar">
+  <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+    <mat-icon matPrefix>search</mat-icon>
+    <mat-label>Order number or customer</mat-label>
+    <input matInput [value]="search()" (input)="onSearch($any($event.target).value)" data-testid="order-search" />
+  </mat-form-field>
+  <mat-chip-listbox multiple aria-label="Filter by status" class="chips">
+    @for (s of statuses; track s) {
+      <mat-chip-option [selected]="selected().includes(s)" (click)="toggleStatus(s)" [attr.data-testid]="'filter-' + s">
+        {{ statusLabel(s) }}
+        @if (counts()[s]) { <span class="count">{{ counts()[s] }}</span> }
+      </mat-chip-option>
+    }
+  </mat-chip-listbox>
+</div>
+
+<app-load-state [loading]="loading() && rows().length === 0" [error]="error()" [empty]="!loading() && rows().length === 0"
+                [emptyText]="search() || selected().length ? 'No orders match your filters' : 'No orders yet'"
+                emptyIcon="receipt_long" (retry)="reload()">
+  <div class="table-wrap" [class.stale]="loading()">
+    <table mat-table [dataSource]="rows()" matSort [matSortActive]="sort().active" [matSortDirection]="sort().direction"
+           matSortDisableClear (matSortChange)="onSort($event)" data-testid="orders-table">
+      <ng-container matColumnDef="orderNumber">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Order</th>
+        <td mat-cell *matCellDef="let o"><a [routerLink]="['/orders', o.id]" class="order-link">{{ o.orderNumber }}</a></td>
+      </ng-container>
+      <ng-container matColumnDef="customerName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Customer</th>
+        <td mat-cell *matCellDef="let o">{{ o.customerName }}</td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+        <td mat-cell *matCellDef="let o"><app-status-chip [status]="o.status" /></td>
+      </ng-container>
+      <ng-container matColumnDef="totalUnits">
+        <th mat-header-cell *matHeaderCellDef class="num">Units</th>
+        <td mat-cell *matCellDef="let o" class="num">{{ o.totalUnits }}</td>
+      </ng-container>
+      <ng-container matColumnDef="totalAmount">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header arrowPosition="before" class="num">Total</th>
+        <td mat-cell *matCellDef="let o" class="num">{{ o.totalAmount | currency }}</td>
+      </ng-container>
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+        <td mat-cell *matCellDef="let o" class="nowrap">{{ o.createdAt | date: 'MMM d, HH:mm' }}</td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns" class="clickable" (click)="router.navigate(['/orders', row.id])"></tr>
+    </table>
+  </div>
+  <mat-paginator [length]="total()" [pageIndex]="page()" [pageSize]="size()" [pageSizeOptions]="[10, 25, 50, 100]"
+                 (page)="onPage($event)" />
+</app-load-state>

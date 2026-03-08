@@ -15,7 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Full application context against Testcontainers Postgres, driven over HTTP with real JWTs. */
-@SpringBootTest
+@SpringBootTest(properties = "fulfillops.jobs.poll-enabled=false")
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 public abstract class IntegrationTest {
@@ -68,6 +68,32 @@ public abstract class IntegrationTest {
                     .andExpect(status().isOk());
         }
         return id;
+    }
+
+    protected static String orderJson(long productId, int qty) {
+        return orderJson("Acme Hardware", productId, qty);
+    }
+
+    protected static String orderJson(String customer, long productId, int qty) {
+        return """
+                {"customerName":"%s","shippingAddress":"12 Dock Rd, Halifax NS","lines":[{"productId":%d,"quantity":%d}]}
+                """.formatted(customer, productId, qty);
+    }
+
+    protected org.springframework.test.web.servlet.ResultActions postOrder(String user, String key, boolean submit,
+                                                                          String body) throws Exception {
+        var req = post("/api/orders").param("submit", String.valueOf(submit))
+                .header("Authorization", bearer(user))
+                .contentType(MediaType.APPLICATION_JSON).content(body);
+        if (key != null) {
+            req = req.header("Idempotency-Key", key);
+        }
+        return mvc.perform(req);
+    }
+
+    protected JsonNode submitOrder(long productId, int qty) throws Exception {
+        return read(postOrder("sales", java.util.UUID.randomUUID().toString(), true, orderJson(productId, qty))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
     }
 
     protected JsonNode read(String body) {

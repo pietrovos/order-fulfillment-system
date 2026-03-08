@@ -31,3 +31,6 @@ fulfillops:
     issuer: fulfillops
   seed:
     demo-users: ${SEED_DEMO_USERS:true}
+  jobs:
+    poll-enabled: ${JOBS_POLL_ENABLED:true}
+    poll-interval: ${JOBS_POLL_INTERVAL:PT0.5S}

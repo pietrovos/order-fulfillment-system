@@ -1,0 +1,94 @@
+<div class="header">
+  <h1>{{ existing() ? 'Edit ' + existing()!.orderNumber : 'New order' }}</h1>
+  <a mat-button [routerLink]="existing() ? ['/orders', existing()!.id] : ['/orders']"><mat-icon>close</mat-icon> Cancel</a>
+</div>
+
+<app-load-state [loading]="loading()" [error]="loadError()" (retry)="load()">
+  <form [formGroup]="form" (ngSubmit)="save(true)" novalidate>
+    @if (saving()) { <mat-progress-bar mode="indeterminate" class="progress" /> }
+
+    <mat-card appearance="outlined" class="section">
+      <mat-card-header><mat-card-title>Customer</mat-card-title></mat-card-header>
+      <mat-card-content class="grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Customer name</mat-label>
+          <input matInput formControlName="customerName" data-testid="customer-name" />
+          @if (form.controls.customerName.hasError('required')) { <mat-error>Required</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Email (optional)</mat-label>
+          <input matInput type="email" formControlName="customerEmail" />
+          @if (form.controls.customerEmail.hasError('email')) { <mat-error>Not a valid email</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="wide">
+          <mat-label>Shipping address</mat-label>
+          <textarea matInput formControlName="shippingAddress" rows="2" data-testid="shipping-address"></textarea>
+          @if (form.controls.shippingAddress.hasError('required')) { <mat-error>Required</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="wide">
+          <mat-label>Notes (optional)</mat-label>
+          <input matInput formControlName="notes" />
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined" class="section">
+      <mat-card-header>
+        <mat-card-title>Line items</mat-card-title>
+        <mat-card-subtitle>{{ lines.length }} {{ lines.length === 1 ? 'line' : 'lines' }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content formArrayName="lines">
+        @for (line of lines.controls; track line; let i = $index) {
+          <div class="line" [formGroupName]="i" [attr.data-testid]="'line-' + i">
+            <mat-form-field appearance="outline" class="product" subscriptSizing="dynamic">
+              <mat-label>Product</mat-label>
+              <mat-select formControlName="productId" [attr.data-testid]="'line-product-' + i">
+                @for (p of products(); track p.id) {
+                  <mat-option [value]="p.id" [disabled]="isTaken(p.id, i)">
+                    <span class="mono">{{ p.sku }}</span> {{ p.name }}
+                    <span class="avail" [class.none]="p.available === 0">{{ p.available }} avail.</span>
+                  </mat-option>
+                }
+              </mat-select>
+              @if (line.controls.productId.hasError('required') && line.controls.productId.touched) {
+                <mat-error>Choose a product</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="qty" subscriptSizing="dynamic">
+              <mat-label>Qty</mat-label>
+              <input matInput type="number" min="1" formControlName="quantity" [attr.data-testid]="'line-qty-' + i" />
+              @if (line.controls.quantity.invalid) { <mat-error>1 – 100,000</mat-error> }
+            </mat-form-field>
+            <div class="line-total">{{ lineTotal(i) | currency }}</div>
+            <button mat-icon-button type="button" (click)="removeLine(i)" [disabled]="lines.length === 1"
+                    [attr.aria-label]="'Remove line ' + (i + 1)" matTooltip="Remove line">
+              <mat-icon>delete</mat-icon>
+            </button>
+            @if (shortfall(i) > 0) {
+              <p class="warn-line" role="status">
+                <mat-icon inline>warning</mat-icon>
+                Only {{ productById().get(line.controls.productId.value!)?.available }} available. Submitting will put this order in the
+                stock-exception queue unless stock arrives first.
+              </p>
+            }
+          </div>
+        }
+        @if (lines.hasError('duplicateProduct')) {
+          <p class="error">Each product can only appear once. Combine the quantities on one line.</p>
+        }
+        <button mat-stroked-button type="button" (click)="addLine()" data-testid="add-line"><mat-icon>add</mat-icon> Add line</button>
+      </mat-card-content>
+    </mat-card>
+
+    @if (serverError()) { <p class="error" role="alert">{{ serverError() }}</p> }
+
+    <div class="footer">
+      <div class="total">Total <strong data-testid="order-total">{{ total() | currency }}</strong></div>
+      <span class="spacer"></span>
+      <button mat-stroked-button type="button" (click)="save(false)" [disabled]="!!saving()" data-testid="save-draft">Save draft</button>
+      <button mat-flat-button type="submit" [disabled]="!!saving()" data-testid="submit-order">
+        {{ saving() === 'submit' ? 'Submitting…' : 'Submit order' }}
+      </button>
+    </div>
+  </form>
+</app-load-state>

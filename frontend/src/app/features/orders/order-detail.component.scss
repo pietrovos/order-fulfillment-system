@@ -1,0 +1,29 @@
+.header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.header h1 { display: flex; align-items: center; gap: 12px; margin: 4px 0; flex-wrap: wrap; }
+.back { color: var(--mat-sys-primary); text-decoration: none; font: var(--mat-sys-label-large); display: inline-flex; align-items: center; gap: 4px; }
+.meta, .muted { color: var(--mat-sys-on-surface-variant); margin: 0; }
+.small { font: var(--mat-sys-body-small); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.danger { color: var(--mat-sys-error); }
+.banner { display: flex; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px;
+          background: var(--mat-sys-surface-container-high); }
+.banner.error { background: var(--mat-sys-error-container); color: var(--mat-sys-on-error-container); }
+.layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 16px; }
+.main, .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.grand-total { text-align: right; padding: 12px 16px; font: var(--mat-sys-title-medium); }
+.strong { font-weight: 600; margin: 0; }
+.address { white-space: pre-line; }
+.movements { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding-bottom: 14px; position: relative; }
+.timeline li:not(:last-child)::before { content: ''; position: absolute; left: 5px; top: 14px; bottom: 0; width: 2px;
+                                        background: var(--mat-sys-outline-variant); }
+.dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; background: var(--mat-sys-primary); }
+li[data-status='STOCK_EXCEPTION'] .dot, li[data-status='CANCELLED'] .dot { background: var(--mat-sys-error); }
+li[data-status='SHIPPED'] .dot { background: #1b873f; }
+.note { font: var(--mat-sys-body-small); }
+@media (max-width: 959px) { .layout { grid-template-columns: 1fr; } }

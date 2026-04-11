@@ -187,6 +187,25 @@ class OrderIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void supervisorRetryReservesOnceStockArrives() throws Exception {
+        long p = createProductWithStock(3);
+        long id = submitOrder(p, 7).get("id").asLong();
+        // still short: stays in the queue with a refreshed reason, no partial reservation
+        mvc.perform(post("/api/orders/{id}/retry-reservation", id).header("Authorization", bearer("supervisor")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("STOCK_EXCEPTION"));
+        mvc.perform(post("/api/orders/{id}/retry-reservation", id).header("Authorization", bearer("sales")))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/api/inventory/stock/{id}/receipts", p).header("Authorization", bearer("warehouse"))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":10}"));
+        mvc.perform(post("/api/orders/{id}/retry-reservation", id).header("Authorization", bearer("supervisor")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("RESERVED"))
+                .andExpect(jsonPath("$.exceptionReason").doesNotExist());
+        assertThat(count("select reserved from stock_levels where product_id = ?", p)).isEqualTo(7);
+    }
+
+    @Test
     void warehouseStaffCannotCreateOrders() throws Exception {
         long p = createProductWithStock(1);
         postOrder("warehouse", null, true, orderJson(p, 1)).andExpect(status().isForbidden());

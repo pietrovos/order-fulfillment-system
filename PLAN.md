@@ -9,7 +9,7 @@ in the README.
 - [x] 2. Auth and roles: SALES, WAREHOUSE, SUPERVISOR; JWT; method-level authorization; seeded users
 - [x] 3. Catalog and inventory: products, one warehouse, on-hand / reserved / available, append-only `inventory_movements` ledger
 - [x] 4. Orders: editor with FormArray line items, explicit state machine, idempotent submission
-- [ ] 5. Reservation correctness: atomic conditional UPDATE, release on cancel, concurrency test (10 in stock, 2x7) repeated in a loop
+- [x] 5. Reservation correctness: atomic conditional UPDATE, release on cancel, concurrency test (10 in stock, 2x7) repeated in a loop
 - [ ] 6. Fulfillment: picking + packing screens, supervisor stock-exception queue, shipment timeline
 - [ ] 7. Carrier integration: simulated carrier container (fail / timeout / succeed-then-drop), outbox with retries, carrier idempotency key, lost-response integration test
 - [ ] 8. UI polish: searchable/sortable order table, inventory dashboard, movement history, responsive layout, loading/empty/error states, realistic seed script
@@ -136,3 +136,6 @@ Roles: `SALES`, `WAREHOUSE`, `SUPERVISOR`. `@PreAuthorize` sits on module servic
 - Job runner: lease-based claim (`FOR UPDATE SKIP LOCKED` + `locked_until`), backoff with jitter, FAILED after
   max_attempts, settle fenced on `locked_by`. Tests set `fulfillops.jobs.poll-enabled=false` and call `JobRunner.drain()`.
 - order_lines unique constraints are DEFERRABLE INITIALLY DEFERRED (Hibernate inserts before orphan deletes).
+- Reservation correctness: decision + evidence in `docs/adr/0001-reservation-locking.md`. Concurrency suite is
+  `ReservationConcurrencyTest` (real HTTP via `HttpIntegrationTest`, RANDOM_PORT). `scripts/stress-reservations.sh N`
+  loops it in fresh JVMs; verified 10/10 runs (500 races). Mutation check: naive check-then-act fails 48/50.

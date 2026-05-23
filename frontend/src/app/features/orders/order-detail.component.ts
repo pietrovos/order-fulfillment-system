@@ -8,7 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Observable } from 'rxjs';
-import { Movement, Order } from '../../core/api/models';
+import { Movement, Order, Shipment } from '../../core/api/models';
+import { FulfillmentApi } from '../../core/api/fulfillment.api';
 import { OrdersApi } from '../../core/api/orders.api';
 import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http/api-error';
@@ -39,6 +40,8 @@ export class OrderDetailComponent implements OnInit {
 
   protected readonly order = signal<Order | null>(null);
   protected readonly movements = signal<Movement[]>([]);
+  protected readonly shipment = signal<Shipment | null>(null);
+  private readonly fulfillment = inject(FulfillmentApi);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
@@ -73,6 +76,9 @@ export class OrderDetailComponent implements OnInit {
         this.order.set(o);
         this.loading.set(false);
         this.api.movements(o.id).subscribe({ next: (m) => this.movements.set(m), error: () => this.movements.set([]) });
+        if (['PACKED', 'SHIPPED'].includes(o.status)) {
+          this.fulfillment.shipmentForOrder(o.id).subscribe({ next: (s) => this.shipment.set(s), error: () => undefined });
+        }
       },
       error: (e) => {
         this.error.set(errorMessage(e));

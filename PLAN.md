@@ -10,7 +10,7 @@ in the README.
 - [x] 3. Catalog and inventory: products, one warehouse, on-hand / reserved / available, append-only `inventory_movements` ledger
 - [x] 4. Orders: editor with FormArray line items, explicit state machine, idempotent submission
 - [x] 5. Reservation correctness: atomic conditional UPDATE, release on cancel, concurrency test (10 in stock, 2x7) repeated in a loop
-- [ ] 6. Fulfillment: picking + packing screens, supervisor stock-exception queue, shipment timeline
+- [x] 6. Fulfillment: picking + packing screens, supervisor stock-exception queue, shipment timeline
 - [ ] 7. Carrier integration: simulated carrier container (fail / timeout / succeed-then-drop), outbox with retries, carrier idempotency key, lost-response integration test
 - [ ] 8. UI polish: searchable/sortable order table, inventory dashboard, movement history, responsive layout, loading/empty/error states, realistic seed script
 - [ ] 9. Playwright e2e demo: 2 concurrent 7-of-10 orders -> one exception; carrier failure -> recovery with one shipment
@@ -139,3 +139,7 @@ Roles: `SALES`, `WAREHOUSE`, `SUPERVISOR`. `@PreAuthorize` sits on module servic
 - Reservation correctness: decision + evidence in `docs/adr/0001-reservation-locking.md`. Concurrency suite is
   `ReservationConcurrencyTest` (real HTTP via `HttpIntegrationTest`, RANDOM_PORT). `scripts/stress-reservations.sh N`
   loops it in fresh JVMs; verified 10/10 runs (500 races). Mutation check: naive check-then-act fails 48/50.
+- Fulfillment: one pick list per order (unique order_id); start/pack call `OrderService.transitionForFulfillment`
+  inside the fulfillment tx. Packing writes shipment (PENDING, `carrier_idempotency_key = fo-shp-<uuid>`) +
+  events + CREATE_SHIPMENT outbox job in one tx. Stock is consumed (SHIP movement) only when the carrier
+  confirms. JobRunner defers (does not fail) job types with no handler on this node.

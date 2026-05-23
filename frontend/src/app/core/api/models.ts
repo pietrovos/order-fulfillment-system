@@ -120,3 +120,75 @@ export interface OrderCommand {
   notes: string | null;
   lines: { productId: number; quantity: number }[];
 }
+
+export interface PickLine {
+  lineNo: number;
+  productId: number;
+  sku: string;
+  productName: string;
+  quantity: number;
+  picked: boolean;
+  pickedBy: string | null;
+  pickedAt: string | null;
+}
+
+export interface PickList {
+  id: number;
+  orderId: number;
+  orderNumber: string;
+  orderStatus: OrderStatus;
+  status: 'OPEN' | 'COMPLETED';
+  picker: string;
+  startedAt: string;
+  completedAt: string | null;
+  version: number;
+  lines: PickLine[];
+}
+
+export type ShipmentStatus = 'PENDING' | 'BOOKED' | 'FAILED';
+
+export interface ShipmentEvent {
+  type: string;
+  detail: string | null;
+  actor: string;
+  at: string;
+}
+
+export interface Shipment {
+  id: string;
+  orderId: number;
+  orderNumber: string;
+  status: ShipmentStatus;
+  carrier: string;
+  carrierIdempotencyKey: string;
+  carrierShipmentId: string | null;
+  trackingNumber: string | null;
+  parcels: number;
+  weightKg: number;
+  shipToName: string;
+  shipToAddress: string;
+  bookingAttempts: number;
+  lastError: string | null;
+  packedBy: string;
+  createdAt: string;
+  bookedAt: string | null;
+  events: ShipmentEvent[];
+}
+
+export interface ExceptionLine {
+  sku: string;
+  productName: string;
+  ordered: number;
+  available: number;
+  shortBy: number;
+}
+
+export interface StockException {
+  orderId: number;
+  orderNumber: string;
+  customerName: string;
+  reason: string;
+  since: string;
+  lines: ExceptionLine[];
+  fulfillableNow: boolean;
+}

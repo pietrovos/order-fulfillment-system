@@ -102,7 +102,14 @@ public class JobRunner {
     private void execute(Job job) {
         JobHandler handler = handlers.get(job.type());
         if (handler == null) {
-            settleFailed(job, "No handler for job type " + job.type());
+            // During a rolling deploy a newer node may enqueue a type this node cannot run yet. Defer it
+            // without spending an attempt rather than dead-lettering it.
+            log.warn("No handler for job type {} on this node; deferring job {}", job.type(), job.id());
+            jdbc.update("""
+                    update outbox_jobs set attempts = attempts - 1, locked_until = null,
+                           next_attempt_at = now() + interval '60 seconds', last_error = ?
+                    where id = ? and locked_by = ? and status = 'PENDING'
+                    """, "No handler registered for " + job.type(), job.id(), nodeId);
             return;
         }
         try {

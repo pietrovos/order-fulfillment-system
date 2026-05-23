@@ -89,6 +89,15 @@
       </div>
 
       <aside class="side">
+        @if (shipment(); as s) {
+          <mat-card appearance="outlined">
+            <mat-card-header><mat-card-title>Shipment</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <p>{{ s.status === 'BOOKED' ? 'Tracking ' + s.trackingNumber : s.status === 'PENDING' ? 'Booking with carrier…' : 'Booking failed' }}</p>
+              <a mat-stroked-button [routerLink]="['/shipments', s.id]" data-testid="view-shipment"><mat-icon>timeline</mat-icon> Timeline</a>
+            </mat-card-content>
+          </mat-card>
+        }
         <mat-card appearance="outlined">
           <mat-card-header><mat-card-title>Ship to</mat-card-title></mat-card-header>
           <mat-card-content>

@@ -34,3 +34,7 @@ fulfillops:
   jobs:
     poll-enabled: ${JOBS_POLL_ENABLED:true}
     poll-interval: ${JOBS_POLL_INTERVAL:PT0.5S}
+    base-backoff: ${JOBS_BASE_BACKOFF:PT1S}
+  carrier:
+    base-url: ${CARRIER_URL:http://localhost:8091}
+    read-timeout: ${CARRIER_READ_TIMEOUT:PT5S}

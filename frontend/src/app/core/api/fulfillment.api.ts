@@ -50,6 +50,10 @@ export class FulfillmentApi {
     return this.http.get<Shipment>(`/api/shipments/${id}`);
   }
 
+  retryBooking(id: string) {
+    return this.http.post<Shipment>(`/api/shipments/${id}/retry`, null);
+  }
+
   shipmentForOrder(orderId: number) {
     return this.http.get<Shipment>(`/api/fulfillment/orders/${orderId}/shipment`);
   }

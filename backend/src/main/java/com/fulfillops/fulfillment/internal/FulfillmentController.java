@@ -93,6 +93,11 @@ class FulfillmentController {
         return fulfillment.shipment(id);
     }
 
+    @PostMapping("/shipments/{id}/retry")
+    ShipmentView retryBooking(@PathVariable UUID id) {
+        return fulfillment.retryBooking(id);
+    }
+
     record Confirm(boolean picked) {
     }
 

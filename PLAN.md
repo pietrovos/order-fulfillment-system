@@ -11,7 +11,7 @@ in the README.
 - [x] 4. Orders: editor with FormArray line items, explicit state machine, idempotent submission
 - [x] 5. Reservation correctness: atomic conditional UPDATE, release on cancel, concurrency test (10 in stock, 2x7) repeated in a loop
 - [x] 6. Fulfillment: picking + packing screens, supervisor stock-exception queue, shipment timeline
-- [ ] 7. Carrier integration: simulated carrier container (fail / timeout / succeed-then-drop), outbox with retries, carrier idempotency key, lost-response integration test
+- [x] 7. Carrier integration: simulated carrier container (fail / timeout / succeed-then-drop), outbox with retries, carrier idempotency key, lost-response integration test
 - [ ] 8. UI polish: searchable/sortable order table, inventory dashboard, movement history, responsive layout, loading/empty/error states, realistic seed script
 - [ ] 9. Playwright e2e demo: 2 concurrent 7-of-10 orders -> one exception; carrier failure -> recovery with one shipment
 - [ ] 10. Delivery: production Dockerfiles, AWS deploy config and README with setup instructions and architecture diagrams
@@ -143,3 +143,9 @@ Roles: `SALES`, `WAREHOUSE`, `SUPERVISOR`. `@PreAuthorize` sits on module servic
   inside the fulfillment tx. Packing writes shipment (PENDING, `carrier_idempotency_key = fo-shp-<uuid>`) +
   events + CREATE_SHIPMENT outbox job in one tx. Stock is consumed (SHIP movement) only when the carrier
   confirms. JobRunner defers (does not fail) job types with no handler on this node.
+- Carrier: `carrier-sim/` (raw-socket Java, no deps; fault queue via /admin/faults). Backend `CarrierClient`
+  classifies IO errors/timeouts/5xx/429 as transient (retry) and other 4xx as permanent. `CreateShipmentJobHandler`:
+  read (tx) -> HTTP call (no tx) -> lock + BOOKED + order SHIPPED + stock SHIP (tx). Gives up after max_attempts
+  -> shipment FAILED; supervisor `POST /api/shipments/{id}/retry` requeues with the same key.
+  `CarrierIntegrationTest` builds the sim image via Testcontainers; mutation check (per-attempt keys) fails it
+  with "expected 1 but was 2" carrier bookings.

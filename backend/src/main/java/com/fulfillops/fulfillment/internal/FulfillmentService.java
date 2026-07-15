@@ -187,6 +187,25 @@ class FulfillmentService {
                 .orElseThrow(() -> DomainException.notFound("Shipment for order", orderId)).toView();
     }
 
+    /**
+     * Re-queues a FAILED booking with the original idempotency key. If an earlier attempt succeeded
+     * without returning a response, the carrier returns that booking.
+     */
+    @PreAuthorize("hasRole('SUPERVISOR')")
+    @Transactional
+    public ShipmentView retryBooking(UUID id) {
+        Shipment sh = shipments.findByIdForUpdate(id).orElseThrow(() -> DomainException.notFound("Shipment", id));
+        if (sh.getStatus() != ShipmentStatus.FAILED) {
+            throw new DomainException(HttpStatus.CONFLICT, "SHIPMENT_NOT_FAILED",
+                    "Only failed bookings can be retried; this one is " + sh.getStatus());
+        }
+        sh.retry();
+        sh.record("BOOKING_RETRY_REQUESTED", "Requeued by supervisor (same idempotency key)", CurrentActor.username());
+        shipments.flush();
+        outbox.enqueue(CREATE_SHIPMENT, sh.getId().toString(), Map.of("orderId", sh.getOrderId()));
+        return sh.toView();
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private PickList find(long id) {

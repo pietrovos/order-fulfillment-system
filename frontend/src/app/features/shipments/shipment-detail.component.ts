@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -9,13 +10,15 @@ import { FulfillmentApi } from '../../core/api/fulfillment.api';
 import { Order, Shipment } from '../../core/api/models';
 import { OrdersApi } from '../../core/api/orders.api';
 import { errorMessage } from '../../core/http/api-error';
+import { AuthService } from '../../core/auth/auth.service';
+import { Notify } from '../../shared/notify.service';
 import { LoadStateComponent } from '../../shared/load-state.component';
 import { StatusChipComponent } from '../../shared/status-chip.component';
 import { buildTimeline } from './timeline';
 
 @Component({
   selector: 'app-shipment-detail',
-  imports: [DatePipe, RouterLink, MatCardModule, MatIconModule, MatProgressBarModule, LoadStateComponent, StatusChipComponent],
+  imports: [DatePipe, RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressBarModule, LoadStateComponent, StatusChipComponent],
   template: `
     <app-load-state [loading]="loading()" [error]="error()" (retry)="load()">
       @if (shipment(); as s) {
@@ -37,7 +40,13 @@ import { buildTimeline } from './timeline';
             <div>Tracking <strong class="mono" data-testid="tracking-number">{{ s.trackingNumber }}</strong> · carrier ref {{ s.carrierShipmentId }}</div>
           </div>
         } @else {
-          <div class="banner fail" role="alert"><mat-icon>error</mat-icon><div>Booking failed: {{ s.lastError }}</div></div>
+          <div class="banner fail" role="alert" data-testid="shipment-failed">
+            <mat-icon>error</mat-icon>
+            <div class="grow">Booking failed after {{ s.bookingAttempts }} attempts: {{ s.lastError }}</div>
+            @if (isSupervisor()) {
+              <button mat-flat-button (click)="retry()" [disabled]="retrying()" data-testid="retry-booking">Retry booking</button>
+            }
+          </div>
         }
         <div class="layout">
           <mat-card appearance="outlined">
@@ -77,6 +86,7 @@ import { buildTimeline } from './timeline';
     .back { color: var(--mat-sys-primary); text-decoration: none; display: inline-flex; gap: 4px; align-items: center; }
     h1 { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 8px 0 16px; }
     h1 a { color: inherit; }
+    .grow { flex: 1; }
     .banner { display: flex; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 12px; margin-bottom: 8px; }
     .pending { background: #fff1c9; color: #6b4e00; }
     .ok { background: #d7f5dd; color: #0f5223; }
@@ -113,6 +123,25 @@ export class ShipmentDetailComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly timeline = computed(() => buildTimeline(this.order(), this.shipment()));
   private timer: ReturnType<typeof setTimeout> | undefined;
+  private readonly auth = inject(AuthService);
+  private readonly notify = inject(Notify);
+  protected readonly isSupervisor = computed(() => this.auth.hasAnyRole(['SUPERVISOR']));
+  protected readonly retrying = signal(false);
+
+  retry(): void {
+    this.retrying.set(true);
+    this.api.retryBooking(this.id()).subscribe({
+      next: () => {
+        this.retrying.set(false);
+        this.notify.ok('Booking requeued with the same idempotency key');
+        this.load();
+      },
+      error: (e) => {
+        this.retrying.set(false);
+        this.notify.fail(e);
+      },
+    });
+  }
 
   ngOnInit(): void {
     this.destroyRef.onDestroy(() => clearTimeout(this.timer));

@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Movement, Order, OrderCommand, OrderStatus, OrderSummary, Page } from './models';
+import { ActivityEntry, Movement, Order, OrderCommand, OrderStatus, OrderSummary, Page } from './models';
 
 export interface OrderQuery {
   q?: string;
@@ -21,6 +21,12 @@ export class OrdersApi {
     if (query.q) params = params.set('q', query.q);
     for (const s of query.statuses ?? []) params = params.append('status', s);
     return this.http.get<Page<OrderSummary>>('/api/orders', { params });
+  }
+
+  activity(page = 0, size = 50, actor = '', q = '') {
+    return this.http.get<Page<ActivityEntry>>('/api/orders/activity', {
+      params: new HttpParams().set('page', page).set('size', size).set('actor', actor).set('q', q),
+    });
   }
 
   counts() {

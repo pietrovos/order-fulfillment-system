@@ -206,6 +206,19 @@ class OrderIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void activityFeedListsStatusChangesNewestFirst() throws Exception {
+        long p = createProductWithStock(5);
+        JsonNode o = submitOrder(p, 1);
+        mvc.perform(get("/api/orders/activity").param("q", o.get("orderNumber").asText())
+                        .header("Authorization", bearer("supervisor")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.content[0].to").value("RESERVED"))
+                .andExpect(jsonPath("$.content[2].to").value("DRAFT"))
+                .andExpect(jsonPath("$.content[0].actor").value("sales"));
+    }
+
+    @Test
     void warehouseStaffCannotCreateOrders() throws Exception {
         long p = createProductWithStock(1);
         postOrder("warehouse", null, true, orderJson(p, 1)).andExpect(status().isForbidden());

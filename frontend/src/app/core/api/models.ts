@@ -192,3 +192,14 @@ export interface StockException {
   lines: ExceptionLine[];
   fulfillableNow: boolean;
 }
+
+export interface ActivityEntry {
+  id: number;
+  orderId: number;
+  orderNumber: string;
+  from: OrderStatus | null;
+  to: OrderStatus;
+  actor: string;
+  note: string | null;
+  at: string;
+}

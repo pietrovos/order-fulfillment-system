@@ -1,7 +1,8 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,7 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { ORDER_STATUSES, OrderStatus, OrderSummary } from '../../core/api/models';
 import { OrdersApi } from '../../core/api/orders.api';
 import { AuthService } from '../../core/auth/auth.service';
@@ -37,6 +38,12 @@ export class OrdersComponent {
   protected readonly columns = ['orderNumber', 'customerName', 'status', 'totalUnits', 'totalAmount', 'createdAt'];
   protected readonly canCreate = computed(() => this.auth.hasAnyRole(['SALES', 'SUPERVISOR']));
 
+  /** Phones get a card list; a seven-column table does not fit in 390px. */
+  protected readonly compact = toSignal(
+    inject(BreakpointObserver).observe('(max-width: 599.98px)').pipe(map((r) => r.matches)),
+    { initialValue: false },
+  );
+
   protected readonly search = signal('');
   protected readonly selected = signal<OrderStatus[]>([]);
   protected readonly sort = signal<Sort>({ active: 'createdAt', direction: 'desc' });
@@ -54,7 +61,32 @@ export class OrdersComponent {
     { initialValue: '' },
   );
 
+  private readonly route = inject(ActivatedRoute);
+
   constructor() {
+    // URL -> state (initial load, back/forward, links such as /orders?status=STOCK_EXCEPTION)
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const statuses = params.getAll('status').filter((s): s is OrderStatus => ORDER_STATUSES.includes(s as OrderStatus));
+      const sort = params.get('sort') ?? 'createdAt';
+      const direction = (params.get('dir') === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc';
+      const q = params.get('q') ?? '';
+      if (q !== this.search()) this.search.set(q);
+      if (statuses.join() !== this.selected().join()) this.selected.set(statuses);
+      if (sort !== this.sort().active || direction !== this.sort().direction) this.sort.set({ active: sort, direction });
+      const page = Number(params.get('page') ?? 0) || 0;
+      if (page !== this.page()) this.page.set(page);
+    });
+    // state -> URL (shareable, bookmarkable views)
+    effect(() => {
+      const queryParams = {
+        q: this.debouncedSearch() || null,
+        status: this.selected().length ? this.selected() : null,
+        sort: this.sort().active === 'createdAt' ? null : this.sort().active,
+        dir: this.sort().direction === 'asc' ? 'asc' : null,
+        page: this.page() || null,
+      };
+      untracked(() => void this.router.navigate([], { queryParams, replaceUrl: true }));
+    });
     effect(() => {
       const query = {
         q: this.debouncedSearch(),

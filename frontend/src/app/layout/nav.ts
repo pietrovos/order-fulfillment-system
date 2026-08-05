@@ -10,7 +10,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: 'Home', icon: 'dashboard', path: '/', roles: [], exact: true },
+  { label: 'Dashboard', icon: 'dashboard', path: '/', roles: [], exact: true },
   { label: 'Orders', icon: 'receipt_long', path: '/orders', roles: [] },
   { label: 'Picking', icon: 'shelves', path: '/warehouse/pick', roles: ['WAREHOUSE', 'SUPERVISOR'] },
   { label: 'Packing', icon: 'package_2', path: '/warehouse/pack', roles: ['WAREHOUSE', 'SUPERVISOR'] },
@@ -18,5 +18,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Shipments', icon: 'local_shipping', path: '/shipments', roles: [] },
   { label: 'Inventory', icon: 'inventory_2', path: '/inventory', roles: [], exact: true },
   { label: 'Movement ledger', icon: 'history', path: '/inventory/movements', roles: [] },
+  { label: 'Audit log', icon: 'manage_search', path: '/audit', roles: [] },
   { label: 'Products', icon: 'category', path: '/products', roles: [] },
 ];

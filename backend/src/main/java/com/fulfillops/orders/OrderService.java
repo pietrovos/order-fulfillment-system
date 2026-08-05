@@ -107,6 +107,13 @@ public class OrderService {
         return counts;
     }
 
+    /** Audit feed: every order status change, newest first, optionally filtered by actor or order number. */
+    @PreAuthorize("isAuthenticated()")
+    @Transactional(readOnly = true)
+    public PageResponse<ActivityEntry> activity(String actor, String q, int page, int size) {
+        return facts.activity(actor, q, Math.max(page, 0), Math.min(Math.max(size, 1), 200));
+    }
+
     @PreAuthorize("isAuthenticated()")
     public List<MovementView> stockMovements(long id) {
         return inventory.movementsForOrder(getInternal(id).orderNumber());

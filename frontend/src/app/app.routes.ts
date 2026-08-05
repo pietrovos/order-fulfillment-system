@@ -50,6 +50,7 @@ export const routes: Routes = [
         path: 'shipments/:id',
         loadComponent: () => import('./features/shipments/shipment-detail.component').then((m) => m.ShipmentDetailComponent),
       },
+      { path: 'audit', loadComponent: () => import('./features/audit/audit.component').then((m) => m.AuditComponent) },
       { path: 'products', loadComponent: () => import('./features/products/products.component').then((m) => m.ProductsComponent) },
       { path: 'inventory', loadComponent: () => import('./features/inventory/inventory.component').then((m) => m.InventoryComponent) },
       {

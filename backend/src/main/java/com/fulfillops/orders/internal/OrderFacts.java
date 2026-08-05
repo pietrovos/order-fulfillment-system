@@ -11,6 +11,10 @@ import com.fulfillops.shared.web.DomainException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import com.fulfillops.orders.ActivityEntry;
+import com.fulfillops.shared.web.PageResponse;
+import java.util.ArrayList;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,9 +29,37 @@ public class OrderFacts {
     }
 
     private final OrderRepository orders;
+    private final JdbcTemplate jdbc;
 
-    OrderFacts(OrderRepository orders) {
+    OrderFacts(OrderRepository orders, JdbcTemplate jdbc) {
         this.orders = orders;
+        this.jdbc = jdbc;
+    }
+
+    public PageResponse<ActivityEntry> activity(String actor, String q, int page, int size) {
+        StringBuilder where = new StringBuilder(" where true");
+        List<Object> args = new ArrayList<>();
+        if (actor != null && !actor.isBlank()) {
+            where.append(" and h.actor = ?");
+            args.add(actor.trim());
+        }
+        if (q != null && !q.isBlank()) {
+            where.append(" and o.order_number ilike ?");
+            args.add("%" + q.trim() + "%");
+        }
+        String from = " from order_status_history h join orders o on o.id = h.order_id";
+        Long total = jdbc.queryForObject("select count(*)" + from + where, Long.class, args.toArray());
+        args.add(size);
+        args.add((long) page * size);
+        List<ActivityEntry> rows = jdbc.query("select h.id, h.order_id, o.order_number, h.from_status, h.to_status,"
+                + " h.actor, h.note, h.created_at" + from + where + " order by h.id desc limit ? offset ?",
+                (rs, i) -> new ActivityEntry(rs.getLong(1), rs.getLong(2), rs.getString(3),
+                        rs.getString(4) == null ? null : OrderStatus.valueOf(rs.getString(4)),
+                        OrderStatus.valueOf(rs.getString(5)), rs.getString(6), rs.getString(7),
+                        rs.getTimestamp(8).toInstant()),
+                args.toArray());
+        long t = total == null ? 0 : total;
+        return new PageResponse<>(rows, page, size, t, (int) ((t + size - 1) / size));
     }
 
     /** Runs inside the create transaction; returns the new order id. */

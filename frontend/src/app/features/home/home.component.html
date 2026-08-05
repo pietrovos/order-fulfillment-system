@@ -1,0 +1,87 @@
+<div class="header">
+  <div>
+    <h1>Good to see you, {{ auth.user()?.displayName?.split(' ')?.[0] }}</h1>
+    <p class="sub">Here's the floor right now.</p>
+  </div>
+  <div class="quick">
+    @if (isSales()) { <a mat-flat-button routerLink="/orders/new"><mat-icon>add</mat-icon> New order</a> }
+    @if (isWarehouse()) { <a mat-stroked-button routerLink="/warehouse/pick"><mat-icon>shelves</mat-icon> Pick</a> }
+  </div>
+</div>
+
+<app-load-state [loading]="loading()" [error]="error()" (retry)="load()">
+  <section class="attention" aria-label="Needs attention">
+    @if (isSupervisor()) {
+      <a class="tile" [class.alert]="count('STOCK_EXCEPTION') > 0" routerLink="/exceptions" data-testid="tile-exceptions">
+        <mat-icon>report</mat-icon><span class="n">{{ count('STOCK_EXCEPTION') }}</span><span>stock exceptions</span>
+      </a>
+    } @else {
+      <a class="tile" [class.alert]="count('STOCK_EXCEPTION') > 0" routerLink="/orders" [queryParams]="{ status: 'STOCK_EXCEPTION' }">
+        <mat-icon>report</mat-icon><span class="n">{{ count('STOCK_EXCEPTION') }}</span><span>stock exceptions</span>
+      </a>
+    }
+    <a class="tile" routerLink="/warehouse/pick"><mat-icon>shelves</mat-icon><span class="n">{{ count('RESERVED') }}</span><span>ready to pick</span></a>
+    <a class="tile" routerLink="/shipments"><mat-icon>schedule</mat-icon><span class="n">{{ pendingShipments() }}</span><span>bookings in flight</span></a>
+    <a class="tile" [class.alert]="failedShipments() > 0" routerLink="/shipments">
+      <mat-icon>error</mat-icon><span class="n">{{ failedShipments() }}</span><span>failed bookings</span>
+    </a>
+  </section>
+
+  <div class="grid">
+    <mat-card appearance="outlined" class="pipeline-card">
+      <mat-card-header><mat-card-title>Order pipeline</mat-card-title></mat-card-header>
+      <mat-card-content>
+        <ul class="pipeline">
+          @for (s of pipeline; track s) {
+            <li>
+              <a [routerLink]="['/orders']" [queryParams]="{ status: s }" class="pl-label">{{ statusLabel(s) }}</a>
+              <span class="bar"><span class="fill" [attr.data-status]="s" [style.width.%]="(100 * count(s)) / maxPipeline()"></span></span>
+              <span class="pl-n">{{ count(s) }}</span>
+            </li>
+          }
+        </ul>
+        <p class="foot">{{ count('DRAFT') }} drafts · {{ count('CANCELLED') }} cancelled</p>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Stock</mat-card-title>
+        <mat-card-subtitle>{{ unitsAvailable() }} units available · {{ unitsReserved() }} reserved</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (lowStock().length === 0) {
+          <p class="muted"><mat-icon inline>check_circle</mat-icon> Nothing at or below its reorder point.</p>
+        } @else {
+          <ul class="low">
+            @for (s of lowStock(); track s.productId) {
+              <li><span class="mono">{{ s.sku }}</span> <span class="name">{{ s.name }}</span>
+                <span class="avail">{{ s.available }} / {{ s.reorderPoint }}</span></li>
+            }
+          </ul>
+        }
+        <a mat-button routerLink="/inventory">Open inventory</a>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined" class="activity-card">
+      <mat-card-header><mat-card-title>Recent activity</mat-card-title></mat-card-header>
+      <mat-card-content>
+        @if (activity().length === 0) {
+          <p class="muted">No activity yet.</p>
+        } @else {
+          <ul class="activity">
+            @for (a of activity(); track a.id) {
+              <li>
+                <a [routerLink]="['/orders', a.orderId]">{{ a.orderNumber }}</a>
+                <app-status-chip [status]="a.to" />
+                <span class="muted">{{ a.actor }} · {{ a.at | date: 'MMM d, HH:mm' }}</span>
+              </li>
+            }
+          </ul>
+        }
+        <a mat-button routerLink="/audit">Full audit log</a>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</app-load-state>

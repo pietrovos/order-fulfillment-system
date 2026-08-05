@@ -44,6 +44,14 @@ class OrderController {
         return orders.list(q, status, page, size, sort, direction);
     }
 
+    @GetMapping("/activity")
+    PageResponse<com.fulfillops.orders.ActivityEntry> activity(@RequestParam(required = false) String actor,
+                                                             @RequestParam(required = false) String q,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "50") int size) {
+        return orders.activity(actor, q, page, size);
+    }
+
     @GetMapping("/counts")
     Map<OrderStatus, Long> counts() {
         return orders.countsByStatus();

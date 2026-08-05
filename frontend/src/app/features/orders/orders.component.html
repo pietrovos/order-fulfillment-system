@@ -24,6 +24,19 @@
 <app-load-state [loading]="loading() && rows().length === 0" [error]="error()" [empty]="!loading() && rows().length === 0"
                 [emptyText]="search() || selected().length ? 'No orders match your filters' : 'No orders yet'"
                 emptyIcon="receipt_long" (retry)="reload()">
+  @if (compact()) {
+    <ul class="cards" [class.stale]="loading()" data-testid="orders-cards">
+      @for (o of rows(); track o.id) {
+        <li>
+          <a [routerLink]="['/orders', o.id]" class="card">
+            <span class="top"><span class="order-link">{{ o.orderNumber }}</span><app-status-chip [status]="o.status" /></span>
+            <span class="customer">{{ o.customerName }}</span>
+            <span class="meta">{{ o.totalUnits }} units · {{ o.totalAmount | currency }} · {{ o.createdAt | date: 'MMM d, HH:mm' }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  } @else {
   <div class="table-wrap" [class.stale]="loading()">
     <table mat-table [dataSource]="rows()" matSort [matSortActive]="sort().active" [matSortDirection]="sort().direction"
            matSortDisableClear (matSortChange)="onSort($event)" data-testid="orders-table">
@@ -55,6 +68,7 @@
       <tr mat-row *matRowDef="let row; columns: columns" class="clickable" (click)="router.navigate(['/orders', row.id])"></tr>
     </table>
   </div>
+  }
   <mat-paginator [length]="total()" [pageIndex]="page()" [pageSize]="size()" [pageSizeOptions]="[10, 25, 50, 100]"
                  (page)="onPage($event)" />
 </app-load-state>

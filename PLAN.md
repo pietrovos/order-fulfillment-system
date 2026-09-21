@@ -13,7 +13,7 @@ in the README.
 - [x] 6. Fulfillment: picking + packing screens, supervisor stock-exception queue, shipment timeline
 - [x] 7. Carrier integration: simulated carrier container (fail / timeout / succeed-then-drop), outbox with retries, carrier idempotency key, lost-response integration test
 - [x] 8. UI polish: searchable/sortable order table, inventory dashboard, movement history, responsive layout, loading/empty/error states, realistic seed script
-- [ ] 9. Playwright e2e demo: 2 concurrent 7-of-10 orders -> one exception; carrier failure -> recovery with one shipment
+- [x] 9. Playwright e2e demo: 2 concurrent 7-of-10 orders -> one exception; carrier failure -> recovery with one shipment
 - [ ] 10. Delivery: production Dockerfiles, AWS deploy config and README with setup instructions and architecture diagrams
 
 Returns and multiple warehouses are outside the current scope.
@@ -153,3 +153,7 @@ Roles: `SALES`, `WAREHOUSE`, `SUPERVISOR`. `@PreAuthorize` sits on module servic
   order filters synced to URL query params, card list for orders under 600px. `scripts/seed.mjs` seeds a realistic
   Maritime distributor via the API (idempotent; needs carrier-sim + poller to book shipments). No horizontal
   page overflow at 390px on dashboard/orders/inventory/editor (checked with Playwright).
+- E2E: `e2e/tests/demo.spec.ts` (serial): two browser sessions submit 7-of-10 simultaneously -> one RESERVED, one
+  STOCK_EXCEPTION (visible in supervisor queue); then pick/pack with carrier FAIL + DROP_AFTER_SUCCESS -> one
+  booking at the carrier, order SHIPPED, stock 3/0. Runs against a live stack (BASE_URL, CARRIER_URL).
+  The demo passed 9 consecutive local runs. CI runs it against the containerised stack.

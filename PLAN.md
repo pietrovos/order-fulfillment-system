@@ -124,7 +124,7 @@ Roles: `SALES`, `WAREHOUSE`, `SUPERVISOR`. `@PreAuthorize` sits on module servic
   UPDATE ... RETURNING + ledger insert). Order-driven ops (reserve/release/ship) are Propagation.MANDATORY.
   Ledger is append-only via trigger (UPDATE/DELETE/TRUNCATE rejected); tests never clean tables, they create
   uniquely-SKU'd products instead.
-- Frontend is zoneless (Angular 21 default). In browser automation, wait for a control's `ng-pristine`/`ng-dirty`
+- Frontend is zoneless (Angular 22 default). In browser automation, wait for a control's `ng-pristine`/`ng-dirty`
   class before typing into a freshly opened dialog, or the first CD pass overwrites the typed value.
 - Orders: `OrderService` (module API) never touches entity mutators directly; `orders.internal.OrderFacts` is the
   bridge so the state machine can't be bypassed. All transitions lock the order row (`findByIdForUpdate`).

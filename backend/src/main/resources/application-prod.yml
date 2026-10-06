@@ -1,0 +1,24 @@
+# Production profile: no dev defaults for secrets; everything comes from the environment.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:15}
+
+fulfillops:
+  jwt:
+    secret: ${JWT_SECRET}
+  seed:
+    demo-users: ${SEED_DEMO_USERS:false}
+
+server:
+  shutdown: graceful
+  forward-headers-strategy: framework
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true

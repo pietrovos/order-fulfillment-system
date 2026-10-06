@@ -42,3 +42,37 @@ jobs:
       - run: npm ci
       - run: npm test -- --watch=false
       - run: npm run build
+
+  e2e:
+    # Builds the production images and runs the Playwright demo against the full stack.
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start stack (postgres, carrier-sim, backend, web)
+        run: docker compose --profile app up -d --build --wait
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: Install Playwright
+        working-directory: e2e
+        run: npm ci && npx playwright install --with-deps chromium
+      - name: Run demo
+        working-directory: e2e
+        env:
+          BASE_URL: http://localhost:8088
+          CARRIER_URL: http://localhost:8091
+        run: npx playwright test
+      - name: Service logs
+        if: failure()
+        run: docker compose --profile app logs --no-color > compose.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+            compose.log

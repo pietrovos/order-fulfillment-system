@@ -1,5 +1,7 @@
-# Local development. `docker compose up -d` starts the database; run the backend and frontend
-# natively (see README), or use the `app` profile to run everything in containers.
+# Local development and the full local stack.
+#
+#   docker compose up -d                    database + carrier simulator (run backend/frontend natively)
+#   docker compose --profile app up -d      everything in containers; open http://localhost:8088
 services:
   postgres:
     image: postgres:17-alpine
@@ -22,6 +24,36 @@ services:
     build: ./carrier-sim
     ports:
       - "${CARRIER_PORT:-8091}:8091"
+
+  backend:
+    profiles: [app]
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      carrier:
+        condition: service_started
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/fulfillops
+      DB_USER: fulfillops
+      DB_PASSWORD: fulfillops
+      # Local demo only. Real deployments read these from a secret store (see deploy/aws).
+      JWT_SECRET: bG9jYWwtZGVtby1vbmx5LWp3dC1zZWNyZXQtMzItYnl0ZXMtbWluaW11bQ==
+      SEED_DEMO_USERS: "true"
+      CARRIER_URL: http://carrier:8091
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+
+  web:
+    profiles: [app]
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "${WEB_PORT:-8088}:8080"
 
 volumes:
   pgdata:

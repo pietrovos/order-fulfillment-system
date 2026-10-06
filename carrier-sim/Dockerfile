@@ -11,5 +11,5 @@ WORKDIR /app
 COPY --from=build /out /app
 ENV PORT=8091
 EXPOSE 8091
-HEALTHCHECK --interval=5s --timeout=2s --retries=10 CMD wget -qO- http://localhost:8091/health || exit 1
+HEALTHCHECK --interval=5s --timeout=2s --retries=10 CMD wget -qO- http://127.0.0.1:8091/health || exit 1
 ENTRYPOINT ["java", "-XX:+UseSerialGC", "-Xmx64m", "CarrierSim"]

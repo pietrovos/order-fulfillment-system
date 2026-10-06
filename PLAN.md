@@ -3,7 +3,7 @@
 Implementation notes for the stock, order and shipment workflows. Setup instructions and diagrams are
 in the README.
 
-## Development checklist
+## Completed work
 
 - [x] 1. Scaffold: backend, frontend, docker-compose, Flyway baseline, CI (backend tests with Testcontainers + frontend tests)
 - [x] 2. Auth and roles: SALES, WAREHOUSE, SUPERVISOR; JWT; method-level authorization; seeded users
@@ -14,7 +14,7 @@ in the README.
 - [x] 7. Carrier integration: simulated carrier container (fail / timeout / succeed-then-drop), outbox with retries, carrier idempotency key, lost-response integration test
 - [x] 8. UI polish: searchable/sortable order table, inventory dashboard, movement history, responsive layout, loading/empty/error states, realistic seed script
 - [x] 9. Playwright e2e demo: 2 concurrent 7-of-10 orders -> one exception; carrier failure -> recovery with one shipment
-- [ ] 10. Delivery: production Dockerfiles, AWS deploy config and README with setup instructions and architecture diagrams
+- [x] 10. Delivery: production Dockerfiles, AWS deploy config and README with setup instructions and architecture diagrams
 
 Returns and multiple warehouses are outside the current scope.
 
@@ -157,3 +157,13 @@ Roles: `SALES`, `WAREHOUSE`, `SUPERVISOR`. `@PreAuthorize` sits on module servic
   STOCK_EXCEPTION (visible in supervisor queue); then pick/pack with carrier FAIL + DROP_AFTER_SUCCESS -> one
   booking at the carrier, order SHIPPED, stock 3/0. Runs against a live stack (BASE_URL, CARRIER_URL).
   The demo passed 9 consecutive local runs. CI runs it against the containerised stack.
+- Delivery: production Dockerfiles (backend layered jar on JRE alpine, non-root; web = nginx-unprivileged with /api
+  proxy + SPA fallback; healthchecks use 127.0.0.1 because localhost resolves to ::1). `docker compose --profile app`
+  runs the full stack on :8088. `application-prod.yml` has no secret defaults. CI e2e job builds images and runs
+  Playwright against the stack. Terraform in `deploy/aws` validated with `terraform validate` (hashicorp/terraform
+  image); never applied. README diagrams rendered with Mermaid 11 to check syntax.
+
+## Deployment status
+
+The Terraform configuration has been validated but has not been applied. No cloud resources have been
+created. Possible extensions are listed under "Scope and next steps" in the README.

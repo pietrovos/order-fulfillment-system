@@ -13,3 +13,9 @@ playwright-report/
 # env
 .env
 e2e/.shot.mjs
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
